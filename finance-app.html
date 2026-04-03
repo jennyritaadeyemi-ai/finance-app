@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Flōw – Smart Finance</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #13131a;
+    --surface2: #1c1c26;
+    --border: #2a2a3a;
+    --accent: #7c6af7;
+    --accent2: #f76a8c;
+    --accent3: #6af7c8;
+    --text: #f0f0f8;
+    --muted: #6b6b88;
+    --card-h: 180px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    overflow-x: hidden;
+  }
+
+  .phone {
+    width: 100%;
+    max-width: 430px;
+    min-height: 100vh;
+    position: relative;
+    background: var(--bg);
+    overflow: hidden;
+  }
+
+  /* SCREENS */
+  .screen { display: none; flex-direction: column; min-height: 100vh; animation: fadeUp 0.35s ease; }
+  .screen.active { display: flex; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(18px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* HEADER */
+  .top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 56px 24px 16px;
+  }
+  .logo { font-size: 22px; font-weight: 800; letter-spacing: -1px; }
+  .logo span { color: var(--accent); }
+  .avatar {
+    width: 38px; height: 38px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px; font-weight: 700; cursor: pointer;
+  }
+
+  /* BALANCE CARD */
+  .balance-card {
+    margin: 8px 24px 0;
+    background: linear-gradient(135deg, #1e1a3a 0%, #1a1a2e 60%, #2a1520 100%);
+    border-radius: 24px;
+    padding: 28px;
+    position: relative;
+    overflow: hidden;
+    border: 1px solid rgba(124,106,247,0.2);
+  }
+  .balance-card::before {
+    content: '';
+    position: absolute;
+    top: -60px; right: -60px;
+    width: 200px; height: 200px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(124,106,247,0.15) 0%, transparent 70%);
+  }
+  .balance-label { font-size: 12px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; font-family: 'DM Mono', monospace; }
+  .balance-amount { font-size: 42px; font-weight: 800; letter-spacing: -2px; margin: 8px 0 4px; }
+  .balance-sub { font-size: 12px; color: var(--muted); font-family: 'DM Mono', monospace; }
+  .balance-pills { display: flex; gap: 10px; margin-top: 20px; }
+  .pill {
+    flex: 1; background: rgba(255,255,255,0.05); border-radius: 12px;
+    padding: 10px 12px; border: 1px solid rgba(255,255,255,0.07);
+  }
+  .pill-label { font-size: 10px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; font-family: 'DM Mono', monospace; }
+  .pill-val { font-size: 16px; font-weight: 700; margin-top: 4px; }
+  .pill-val.green { color: var(--accent3); }
+  .pill-val.red { color: var(--accent2); }
+
+  /* SECTION TITLE */
+  .section-title {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 24px 24px 12px;
+  }
+  .section-title h3 { font-size: 16px; font-weight: 700; }
+  .section-title a { font-size: 12px; color: var(--accent); cursor: pointer; font-family: 'DM Mono', monospace; }
+
+  /* QUICK ACTIONS */
+  .quick-actions { display: flex; gap: 12px; padding: 0 24px; }
+  .qa-btn {
+    flex: 1; background: var(--surface); border: 1px solid var(--border);
+    border-radius: 18px; padding: 16px 8px; text-align: center;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .qa-btn:hover, .qa-btn:active { background: var(--surface2); transform: scale(0.96); }
+  .qa-icon { font-size: 22px; margin-bottom: 6px; }
+  .qa-label { font-size: 11px; color: var(--muted); font-weight: 600; }
+
+  /* CATEGORIES */
+  .cat-scroll { display: flex; gap: 10px; padding: 0 24px; overflow-x: auto; scrollbar-width: none; }
+  .cat-scroll::-webkit-scrollbar { display: none; }
+  .cat-chip {
+    white-space: nowrap; padding: 8px 16px; border-radius: 20px;
+    border: 1px solid var(--border); font-size: 12px; font-weight: 600;
+    cursor: pointer; transition: all 0.2s; background: var(--surface);
+    font-family: 'DM Mono', monospace;
+  }
+  .cat-chip.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+  /* TRANSACTIONS */
+  .txn-list { padding: 0 24px; display: flex; flex-direction: column; gap: 10px; }
+  .txn-item {
+    display: flex; align-items: center; gap: 14px;
+    background: var(--surface); border-radius: 16px;
+    padding: 14px 16px; border: 1px solid var(--border);
+    cursor: pointer; transition: all 0.2s;
+  }
+  .txn-item:hover, .txn-item:active { background: var(--surface2); }
+  .txn-icon { width: 42px; height: 42px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+  .txn-info { flex: 1; min-width: 0; }
+  .txn-name { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .txn-meta { font-size: 11px; color: var(--muted); margin-top: 2px; font-family: 'DM Mono', monospace; }
+  .txn-amount { font-size: 15px; font-weight: 700; flex-shrink: 0; font-family: 'DM Mono', monospace; }
+  .txn-amount.neg { color: var(--accent2); }
+  .txn-amount.pos { color: var(--accent3); }
+
+  /* BUDGET SCREEN */
+  .budget-list { padding: 0 24px; display: flex; flex-direction: column; gap: 14px; }
+  .budget-item { background: var(--surface); border-radius: 18px; padding: 18px; border: 1px solid var(--border); }
+  .budget-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .budget-name { font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+  .budget-pct { font-size: 12px; color: var(--muted); font-family: 'DM Mono', monospace; }
+  .progress-bar { height: 8px; background: var(--surface2); border-radius: 99px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 99px; transition: width 0.6s ease; }
+  .budget-sub { display: flex; justify-content: space-between; margin-top: 8px; font-size: 11px; color: var(--muted); font-family: 'DM Mono', monospace; }
+
+  /* AI INSIGHTS */
+  .insight-list { padding: 0 24px; display: flex; flex-direction: column; gap: 12px; }
+  .insight-card {
+    border-radius: 18px; padding: 18px;
+    border: 1px solid var(--border); position: relative; overflow: hidden;
+    cursor: pointer;
+  }
+  .insight-card.purple { background: linear-gradient(135deg, rgba(124,106,247,0.12), rgba(124,106,247,0.03)); border-color: rgba(124,106,247,0.3); }
+  .insight-card.pink   { background: linear-gradient(135deg, rgba(247,106,140,0.12), rgba(247,106,140,0.03)); border-color: rgba(247,106,140,0.3); }
+  .insight-card.green  { background: linear-gradient(135deg, rgba(106,247,200,0.12), rgba(106,247,200,0.03)); border-color: rgba(106,247,200,0.3); }
+  .insight-tag { font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; font-family: 'DM Mono', monospace; margin-bottom: 8px; }
+  .insight-card.purple .insight-tag { color: var(--accent); }
+  .insight-card.pink   .insight-tag { color: var(--accent2); }
+  .insight-card.green  .insight-tag { color: var(--accent3); }
+  .insight-title { font-size: 15px; font-weight: 700; margin-bottom: 6px; line-height: 1.3; }
+  .insight-body { font-size: 12px; color: var(--muted); line-height: 1.6; }
+  .insight-action { margin-top: 12px; font-size: 12px; font-weight: 600; font-family: 'DM Mono', monospace; }
+  .insight-card.purple .insight-action { color: var(--accent); }
+  .insight-card.pink   .insight-action { color: var(--accent2); }
+  .insight-card.green  .insight-action { color: var(--accent3); }
+
+  /* BILLS SCREEN */
+  .bills-list { padding: 0 24px; display: flex; flex-direction: column; gap: 10px; }
+  .bill-item {
+    display: flex; align-items: center; gap: 14px;
+    border-radius: 16px; padding: 16px; border: 1px solid var(--border);
+    background: var(--surface);
+  }
+  .bill-icon { width: 44px; height: 44px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+  .bill-info { flex: 1; }
+  .bill-name { font-size: 14px; font-weight: 600; }
+  .bill-due { font-size: 11px; color: var(--muted); margin-top: 3px; font-family: 'DM Mono', monospace; }
+  .bill-right { text-align: right; }
+  .bill-amount { font-size: 16px; font-weight: 700; font-family: 'DM Mono', monospace; }
+  .bill-badge { font-size: 10px; padding: 3px 8px; border-radius: 6px; margin-top: 4px; display: inline-block; font-weight: 600; }
+  .badge-soon { background: rgba(247,106,140,0.15); color: var(--accent2); }
+  .badge-ok   { background: rgba(106,247,200,0.15); color: var(--accent3); }
+  .badge-auto { background: rgba(124,106,247,0.15); color: var(--accent); }
+
+  /* BOTTOM NAV */
+  .bottom-nav {
+    position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+    width: 100%; max-width: 430px;
+    background: rgba(13,13,20,0.92); backdrop-filter: blur(20px);
+    border-top: 1px solid var(--border);
+    display: flex; padding: 12px 0 28px;
+  }
+  .nav-item {
+    flex: 1; display: flex; flex-direction: column; align-items: center;
+    gap: 4px; cursor: pointer; transition: all 0.2s;
+  }
+  .nav-icon { font-size: 22px; }
+  .nav-label { font-size: 10px; color: var(--muted); font-weight: 600; letter-spacing: 0.5px; transition: color 0.2s; }
+  .nav-item.active .nav-label { color: var(--accent); }
+  .nav-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--accent); margin-top: 2px; display: none; }
+  .nav-item.active .nav-dot { display: block; }
+
+  /* SCROLLABLE CONTENT AREA */
+  .scroll-area { flex: 1; overflow-y: auto; padding-bottom: 100px; scrollbar-width: none; }
+  .scroll-area::-webkit-scrollbar { display: none; }
+
+  /* SPENDING CHART */
+  .chart-wrap { padding: 0 24px; }
+  .chart-box { background: var(--surface); border-radius: 20px; padding: 20px; border: 1px solid var(--border); }
+  .chart-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; }
+  .chart-title { font-size: 13px; color: var(--muted); font-family: 'DM Mono', monospace; }
+  .chart-val { font-size: 28px; font-weight: 800; letter-spacing: -1px; margin-top: 4px; }
+  .chart-trend { font-size: 12px; color: var(--accent3); font-family: 'DM Mono', monospace; display: flex; align-items: center; gap: 4px; margin-top: 4px; }
+  .chart-tabs { display: flex; gap: 6px; }
+  .chart-tab { font-size: 11px; padding: 4px 10px; border-radius: 8px; cursor: pointer; font-family: 'DM Mono', monospace; border: 1px solid var(--border); color: var(--muted); transition: all 0.2s; }
+  .chart-tab.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .bars { display: flex; align-items: flex-end; gap: 6px; height: 80px; }
+  .bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .bar { width: 100%; border-radius: 6px 6px 0 0; background: var(--surface2); transition: all 0.3s; }
+  .bar.highlight { background: linear-gradient(180deg, var(--accent), rgba(124,106,247,0.5)); }
+  .bar-lbl { font-size: 9px; color: var(--muted); font-family: 'DM Mono', monospace; }
+
+  /* MODAL */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100; backdrop-filter: blur(4px); justify-content: flex-end; align-items: flex-end; }
+  .modal-overlay.open { display: flex; animation: fadeIn 0.2s ease; }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  .modal-sheet { background: var(--surface); border-radius: 28px 28px 0 0; padding: 28px 24px 48px; width: 100%; animation: slideUp 0.3s ease; }
+  @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  .modal-handle { width: 40px; height: 4px; background: var(--border); border-radius: 99px; margin: 0 auto 24px; }
+  .modal-title { font-size: 20px; font-weight: 800; margin-bottom: 6px; }
+  .modal-sub { font-size: 13px; color: var(--muted); margin-bottom: 24px; font-family: 'DM Mono', monospace; }
+  .modal-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border); }
+  .modal-row:last-child { border-bottom: none; }
+  .modal-row-label { font-size: 13px; color: var(--muted); font-family: 'DM Mono', monospace; }
+  .modal-row-val { font-size: 14px; font-weight: 600; }
+  .modal-close-btn { width: 100%; margin-top: 20px; padding: 16px; background: var(--accent); border: none; border-radius: 16px; color: #fff; font-size: 15px; font-weight: 700; font-family: 'Syne', sans-serif; cursor: pointer; }
+
+  .spacer { height: 20px; }
+</style>
+</head>
+<body>
+<div class="phone">
+
+  <!-- ═══════════ HOME SCREEN ═══════════ -->
+  <div class="screen active" id="screen-home">
+    <div class="top-bar">
+      <div class="logo">fl<span>ō</span>w</div>
+      <div class="avatar">A</div>
+    </div>
+    <div class="scroll-area">
+
+      <!-- Balance Card -->
+      <div class="balance-card">
+        <div class="balance-label">Net Worth</div>
+        <div class="balance-amount">$12,840</div>
+        <div class="balance-sub">↑ +$320 this month</div>
+        <div class="balance-pills">
+          <div class="pill">
+            <div class="pill-label">Income</div>
+            <div class="pill-val green">$4,200</div>
+          </div>
+          <div class="pill">
+            <div class="pill-label">Spent</div>
+            <div class="pill-val red">$2,650</div>
+          </div>
+          <div class="pill">
+            <div class="pill-label">Saved</div>
+            <div class="pill-val" style="color:var(--accent)">$1,550</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Spending Chart -->
+      <div class="section-title"><h3>Spending Overview</h3>
+        <div style="display:flex;gap:6px">
+          <div class="chart-tab active">Week</div>
+          <div class="chart-tab">Month</div>
+        </div>
+      </div>
+      <div class="chart-wrap">
+        <div class="chart-box">
+          <div class="bars">
+            <div class="bar-col"><div class="bar" style="height:35%"></div><div class="bar-lbl">Mon</div></div>
+            <div class="bar-col"><div class="bar" style="height:55%"></div><div class="bar-lbl">Tue</div></div>
+            <div class="bar-col"><div class="bar" style="height:42%"></div><div class="bar-lbl">Wed</div></div>
+            <div class="bar-col"><div class="bar highlight" style="height:80%"></div><div class="bar-lbl">Thu</div></div>
+            <div class="bar-col"><div class="bar" style="height:60%"></div><div class="bar-lbl">Fri</div></div>
+            <div class="bar-col"><div class="bar" style="height:28%"></div><div class="bar-lbl">Sat</div></div>
+            <div class="bar-col"><div class="bar" style="height:20%"></div><div class="bar-lbl">Sun</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="section-title"><h3>Quick Actions</h3></div>
+      <div class="quick-actions">
+        <div class="qa-btn" onclick="showModal('add-txn')"><div class="qa-icon">➕</div><div class="qa-label">Add</div></div>
+        <div class="qa-btn" onclick="showModal('transfer')"><div class="qa-icon">↔️</div><div class="qa-label">Transfer</div></div>
+        <div class="qa-btn" onclick="switchTab('bills')"><div class="qa-icon">📅</div><div class="qa-label">Bills</div></div>
+        <div class="qa-btn" onclick="switchTab('insights')"><div class="qa-icon">✨</div><div class="qa-label">Insights</div></div>
+      </div>
+
+      <!-- Recent Transactions -->
+      <div class="section-title"><h3>Recent</h3><a onclick="switchTab('transactions')">See all →</a></div>
+      <div class="cat-scroll" style="margin-bottom:12px">
+        <div class="cat-chip active">All</div>
+        <div class="cat-chip">Food</div>
+        <div class="cat-chip">Transport</div>
+        <div class="cat-chip">Shopping</div>
+        <div class="cat-chip">Health</div>
+      </div>
+      <div class="txn-list">
+        <div class="txn-item" onclick="showModal('txn-detail')">
+          <div class="txn-icon" style="background:rgba(247,106,140,0.12)">🍕</div>
+          <div class="txn-info"><div class="txn-name">Domino's Pizza</div><div class="txn-meta">Food · Today 7:42pm</div></div>
+          <div class="txn-amount neg">-$24.90</div>
+        </div>
+        <div class="txn-item" onclick="showModal('txn-detail')">
+          <div class="txn-icon" style="background:rgba(106,247,200,0.12)">💰</div>
+          <div class="txn-info"><div class="txn-name">Salary – Acme Corp</div><div class="txn-meta">Income · Today 9:00am</div></div>
+          <div class="txn-amount pos">+$4,200.00</div>
+        </div>
+        <div class="txn-item" onclick="showModal('txn-detail')">
+          <div class="txn-icon" style="background:rgba(124,106,247,0.12)">🛒</div>
+          <div class="txn-info"><div class="txn-name">Whole Foods Market</div><div class="txn-meta">Groceries · Yesterday</div></div>
+          <div class="txn-amount neg">-$87.35</div>
+        </div>
+        <div class="txn-item" onclick="showModal('txn-detail')">
+          <div class="txn-icon" style="background:rgba(255,200,100,0.12)">🚗</div>
+          <div class="txn-info"><div class="txn-name">Uber</div><div class="txn-meta">Transport · Yesterday</div></div>
+          <div class="txn-amount neg">-$12.50</div>
+        </div>
+      </div>
+      <div class="spacer"></div>
+    </div>
+  </div>
+
+  <!-- ═══════════ TRANSACTIONS SCREEN ═══════════ -->
+  <div class="screen" id="screen-transactions">
+    <div class="top-bar">
+      <div class="logo">fl<span>ō</span>w</div>
+      <div style="font-size:12px;color:var(--muted);font-family:'DM Mono',monospace">March 2026</div>
+    </div>
+    <div class="scroll-area">
+      <div class="cat-scroll" style="margin-bottom:12px">
+        <div class="cat-chip active">All</div>
+        <div class="cat-chip">Food</div>
+        <div class="cat-chip">Transport</div>
+        <div class="cat-chip">Shopping</div>
+        <div class="cat-chip">Health</div>
+        <div class="cat-chip">Utilities</div>
+      </div>
+      <div class="txn-list">
+        <div style="padding:4px 0 2px;font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;letter-spacing:1px">TODAY</div>
+        <div class="txn-item" onclick="showModal('txn-detail')"><div class="txn-icon" style="background:rgba(247,106,140,0.12)">🍕</div><div class="txn-info"><div class="txn-name">Domino's Pizza</div><div class="txn-meta">Food · 7:42pm</div></div><div class="txn-amount neg">-$24.90</div></div>
+        <div class="txn-item" onclick="showModal('txn-detail')"><div class="txn-icon" style="background:rgba(106,247,200,0.12)">💰</div><div class="txn-info"><div class="txn-name">Salary – Acme Corp</div><div class="txn-meta">Income · 9:00am</div></div><div class="txn-amount pos">+$4,200.00</div></div>
+        <div style="padding:12px 0 2px;font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;letter-spacing:1px">YESTERDAY</div>
+        <div class="txn-item" onclick="showModal('txn-detail')"><div class="txn-icon" style="background:rgba(124,106,247,0.12)">🛒</div><div class="txn-info"><div class="txn-name">Whole Foods Market</div><div class="txn-meta">Groceries</div></div><div class="txn-amount neg">-$87.35</div></div>
+        <div class="txn-item" onclick="showModal('txn-detail')"><div class="txn-icon" style="background:rgba(255,200,100,0.12)">🚗</div><div class="txn-info"><div class="txn-name">Uber</div><div class="txn-meta">Transport</div></div><div class="txn-amount neg">-$12.50</div></div>
+        <div class="txn-item" onclick="showModal('txn-detail')"><div class="txn-icon" style="background:rgba(100,200,255,0.12)">💊</div><div class="txn-info"><div class="txn-name">CVS Pharmacy</div><div class="txn-meta">Health</div></div><div class="txn-amount neg">-$18.00</div></div>
+        <div style="padding:12px 0 2px;font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;letter-spacing:1px">MAR 19</div>
+        <div class="txn-item" onclick="showModal('txn-detail')"><div class="txn-icon" style="background:rgba(247,106,140,0.12)">☕</div><div class="txn-info"><div class="txn-name">Blue Bottle Coffee</div><div class="txn-meta">Food & Drink</div></div><div class="txn-amount neg">-$6.80</div></div>
+        <div class="txn-item" onclick="showModal('txn-detail')"><div class="txn-icon" style="background:rgba(124,106,247,0.12)">🎬</div><div class="txn-info"><div class="txn-name">Netflix</div><div class="txn-meta">Entertainment · Auto-pay</div></div><div class="txn-amount neg">-$15.49</div></div>
+        <div class="txn-item" onclick="showModal('txn-detail')"><div class="txn-icon" style="background:rgba(255,170,50,0.12)">⛽</div><div class="txn-info"><div class="txn-name">Shell Gas Station</div><div class="txn-meta">Transport</div></div><div class="txn-amount neg">-$55.20</div></div>
+      </div>
+      <div class="spacer"></div>
+    </div>
+  </div>
+
+  <!-- ═══════════ BUDGET SCREEN ═══════════ -->
+  <div class="screen" id="screen-budget">
+    <div class="top-bar"><div class="logo">fl<span>ō</span>w</div><div style="font-size:12px;color:var(--muted);font-family:'DM Mono',monospace">March Budget</div></div>
+    <div class="scroll-area">
+      <div class="balance-card" style="margin-bottom:0">
+        <div class="balance-label">Total Budget</div>
+        <div class="balance-amount" style="font-size:32px">$3,000</div>
+        <div class="balance-sub">$2,650 used · $350 remaining</div>
+        <div style="margin-top:16px">
+          <div class="progress-bar"><div class="progress-fill" style="width:88%;background:linear-gradient(90deg,var(--accent),var(--accent2))"></div></div>
+          <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:11px;color:var(--muted);font-family:'DM Mono',monospace">
+            <span>88% used</span><span>12 days left</span>
+          </div>
+        </div>
+      </div>
+      <div class="section-title"><h3>Categories</h3><a onclick="showModal('add-budget')">+ Add</a></div>
+      <div class="budget-list">
+        <div class="budget-item">
+          <div class="budget-row"><div class="budget-name">🛒 Groceries</div><div class="budget-pct">$312 / $400</div></div>
+          <div class="progress-bar"><div class="progress-fill" style="width:78%;background:var(--accent3)"></div></div>
+          <div class="budget-sub"><span>78% used</span><span>$88 left</span></div>
+        </div>
+        <div class="budget-item">
+          <div class="budget-row"><div class="budget-name">🍕 Dining Out</div><div class="budget-pct">$290 / $300</div></div>
+          <div class="progress-bar"><div class="progress-fill" style="width:97%;background:var(--accent2)"></div></div>
+          <div class="budget-sub"><span style="color:var(--accent2)">97% used ⚠️</span><span>$10 left</span></div>
+        </div>
+        <div class="budget-item">
+          <div class="budget-row"><div class="budget-name">🚗 Transport</div><div class="budget-pct">$145 / $250</div></div>
+          <div class="progress-bar"><div class="progress-fill" style="width:58%;background:var(--accent)"></div></div>
+          <div class="budget-sub"><span>58% used</span><span>$105 left</span></div>
+        </div>
+        <div class="budget-item">
+          <div class="budget-row"><div class="budget-name">🎬 Entertainment</div><div class="budget-pct">$85 / $150</div></div>
+          <div class="progress-bar"><div class="progress-fill" style="width:57%;background:var(--accent)"></div></div>
+          <div class="budget-sub"><span>57% used</span><span>$65 left</span></div>
+        </div>
+        <div class="budget-item">
+          <div class="budget-row"><div class="budget-name">💊 Health</div><div class="budget-pct">$55 / $200</div></div>
+          <div class="progress-bar"><div class="progress-fill" style="width:28%;background:var(--accent3)"></div></div>
+          <div class="budget-sub"><span>28% used</span><span>$145 left</span></div>
+        </div>
+        <div class="budget-item">
+          <div class="budget-row"><div class="budget-name">🏠 Utilities</div><div class="budget-pct">$380 / $400</div></div>
+          <div class="progress-bar"><div class="progress-fill" style="width:95%;background:var(--accent2)"></div></div>
+          <div class="budget-sub"><span style="color:var(--accent2)">95% used</span><span>$20 left</span></div>
+        </div>
+      </div>
+      <div class="spacer"></div>
+    </div>
+  </div>
+
+  <!-- ═══════════ BILLS SCREEN ═══════════ -->
+  <div class="screen" id="screen-bills">
+    <div class="top-bar"><div class="logo">fl<span>ō</span>w</div><div style="font-size:12px;color:var(--muted);font-family:'DM Mono',monospace">Upcoming Bills</div></div>
+    <div class="scroll-area">
+      <div class="balance-card" style="margin-bottom:0">
+        <div class="balance-label">Due this month</div>
+        <div class="balance-amount" style="font-size:32px">$1,847</div>
+        <div class="balance-sub">3 bills due within 7 days</div>
+      </div>
+      <div class="section-title"><h3>Coming Up</h3></div>
+      <div class="bills-list">
+        <div class="bill-item">
+          <div class="bill-icon" style="background:rgba(247,106,140,0.12)">🏠</div>
+          <div class="bill-info"><div class="bill-name">Rent</div><div class="bill-due">Due Mar 25 · in 4 days</div></div>
+          <div class="bill-right"><div class="bill-amount">$1,200</div><div class="bill-badge badge-soon">Due soon</div></div>
+        </div>
+        <div class="bill-item">
+          <div class="bill-icon" style="background:rgba(100,160,255,0.12)">⚡</div>
+          <div class="bill-info"><div class="bill-name">Electric – AEP Ohio</div><div class="bill-due">Due Mar 27 · in 6 days</div></div>
+          <div class="bill-right"><div class="bill-amount">$94</div><div class="bill-badge badge-soon">Due soon</div></div>
+        </div>
+        <div class="bill-item">
+          <div class="bill-icon" style="background:rgba(106,247,200,0.12)">📱</div>
+          <div class="bill-info"><div class="bill-name">Phone – T-Mobile</div><div class="bill-due">Due Mar 28 · Auto-pay</div></div>
+          <div class="bill-right"><div class="bill-amount">$55</div><div class="bill-badge badge-auto">Auto</div></div>
+        </div>
+        <div class="bill-item">
+          <div class="bill-icon" style="background:rgba(124,106,247,0.12)">🎬</div>
+          <div class="bill-info"><div class="bill-name">Netflix</div><div class="bill-due">Due Apr 3 · Auto-pay</div></div>
+          <div class="bill-right"><div class="bill-amount">$15.49</div><div class="bill-badge badge-auto">Auto</div></div>
+        </div>
+        <div class="bill-item">
+          <div class="bill-icon" style="background:rgba(124,106,247,0.12)">🎵</div>
+          <div class="bill-info"><div class="bill-name">Spotify</div><div class="bill-due">Due Apr 5 · Auto-pay</div></div>
+          <div class="bill-right"><div class="bill-amount">$9.99</div><div class="bill-badge badge-auto">Auto</div></div>
+        </div>
+        <div class="bill-item">
+          <div class="bill-icon" style="background:rgba(255,200,100,0.12)">🌐</div>
+          <div class="bill-info"><div class="bill-name">Internet – Spectrum</div><div class="bill-due">Due Apr 8</div></div>
+          <div class="bill-right"><div class="bill-amount">$65</div><div class="bill-badge badge-ok">On track</div></div>
+        </div>
+      </div>
+      <div class="spacer"></div>
+    </div>
+  </div>
+
+  <!-- ═══════════ INSIGHTS SCREEN ═══════════ -->
+  <div class="screen" id="screen-insights">
+    <div class="top-bar"><div class="logo">fl<span>ō</span>w</div><div style="font-size:12px;color:var(--muted);font-family:'DM Mono',monospace">AI Insights</div></div>
+    <div class="scroll-area">
+      <div class="section-title"><h3>Personalized Tips</h3></div>
+      <div class="insight-list">
+        <div class="insight-card pink">
+          <div class="insight-tag">⚠️ Alert</div>
+          <div class="insight-title">Dining budget almost gone</div>
+          <div class="insight-body">You've spent $290 of your $300 dining budget with 12 days remaining. At this rate, you'll overspend by ~$140 this month.</div>
+          <div class="insight-action">Adjust budget →</div>
+        </div>
+        <div class="insight-card green">
+          <div class="insight-tag">💡 Tip</div>
+          <div class="insight-title">Save $47/mo on subscriptions</div>
+          <div class="insight-body">You have 6 active subscriptions totaling $162/mo. We detected that you haven't used Hulu in 3 weeks — canceling could save you $17.99.</div>
+          <div class="insight-action">Review subscriptions →</div>
+        </div>
+        <div class="insight-card purple">
+          <div class="insight-tag">📈 Savings</div>
+          <div class="insight-title">Great month for savings!</div>
+          <div class="insight-body">You saved $1,550 this month — 36% of your income. That's 12% higher than your 3-month average. Keep it up!</div>
+          <div class="insight-action">See savings history →</div>
+        </div>
+        <div class="insight-card pink">
+          <div class="insight-tag">🔮 Prediction</div>
+          <div class="insight-title">High-spend week ahead</div>
+          <div class="insight-body">Based on your patterns, next week you tend to spend 40% more. Your rent is also due Mar 25. Consider moving $1,300 to checking now.</div>
+          <div class="insight-action">Plan for it →</div>
+        </div>
+        <div class="insight-card green">
+          <div class="insight-tag">🎯 Goal</div>
+          <div class="insight-title">Emergency fund: 2 months away</div>
+          <div class="insight-body">At your current savings rate, you'll reach a 3-month emergency fund by May 2026. Saving $50 extra/mo cuts that to 6 weeks.</div>
+          <div class="insight-action">Set a savings goal →</div>
+        </div>
+      </div>
+      <div class="spacer"></div>
+    </div>
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <nav class="bottom-nav">
+    <div class="nav-item active" id="nav-home" onclick="switchTab('home')">
+      <div class="nav-icon">🏠</div><div class="nav-label">Home</div><div class="nav-dot"></div>
+    </div>
+    <div class="nav-item" id="nav-transactions" onclick="switchTab('transactions')">
+      <div class="nav-icon">📋</div><div class="nav-label">Txns</div><div class="nav-dot"></div>
+    </div>
+    <div class="nav-item" id="nav-budget" onclick="switchTab('budget')">
+      <div class="nav-icon">🎯</div><div class="nav-label">Budget</div><div class="nav-dot"></div>
+    </div>
+    <div class="nav-item" id="nav-bills" onclick="switchTab('bills')">
+      <div class="nav-icon">📅</div><div class="nav-label">Bills</div><div class="nav-dot"></div>
+    </div>
+    <div class="nav-item" id="nav-insights" onclick="switchTab('insights')">
+      <div class="nav-icon">✨</div><div class="nav-label">Insights</div><div class="nav-dot"></div>
+    </div>
+  </nav>
+</div>
+
+<!-- MODALS -->
+<div class="modal-overlay" id="modal-txn-detail" onclick="if(event.target===this)closeModal('txn-detail')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div style="font-size:36px;margin-bottom:12px;text-align:center">🍕</div>
+    <div class="modal-title" style="text-align:center">Domino's Pizza</div>
+    <div class="modal-sub" style="text-align:center">Food & Dining</div>
+    <div class="modal-row"><span class="modal-row-label">Amount</span><span class="modal-row-val" style="color:var(--accent2)">-$24.90</span></div>
+    <div class="modal-row"><span class="modal-row-label">Date</span><span class="modal-row-val">Today, 7:42 PM</span></div>
+    <div class="modal-row"><span class="modal-row-label">Category</span><span class="modal-row-val">🍕 Food</span></div>
+    <div class="modal-row"><span class="modal-row-label">Account</span><span class="modal-row-val">Chase Checking</span></div>
+    <div class="modal-row"><span class="modal-row-label">Budget Impact</span><span class="modal-row-val" style="color:var(--accent2)">97% of Dining used</span></div>
+    <button class="modal-close-btn" onclick="closeModal('txn-detail')">Done</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-add-txn" onclick="if(event.target===this)closeModal('add-txn')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Add Transaction</div>
+    <div class="modal-sub">Manually log an expense or income</div>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div style="background:var(--surface2);border-radius:14px;padding:16px;border:1px solid var(--border)">
+        <div style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:8px">AMOUNT</div>
+        <div style="font-size:32px;font-weight:800;letter-spacing:-1px">$0.00</div>
+      </div>
+      <div style="display:flex;gap:10px">
+        <div style="flex:1;background:rgba(247,106,140,0.15);border:1px solid rgba(247,106,140,0.3);border-radius:12px;padding:12px;text-align:center;cursor:pointer">
+          <div style="font-size:13px;font-weight:700;color:var(--accent2)">Expense</div>
+        </div>
+        <div style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:12px;text-align:center;cursor:pointer">
+          <div style="font-size:13px;font-weight:700;color:var(--muted)">Income</div>
+        </div>
+      </div>
+    </div>
+    <button class="modal-close-btn" onclick="closeModal('add-txn')">Save Transaction</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-transfer" onclick="if(event.target===this)closeModal('transfer')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Transfer Funds</div>
+    <div class="modal-sub">Move money between accounts</div>
+    <div class="modal-row"><span class="modal-row-label">From</span><span class="modal-row-val">Chase Checking · $2,840</span></div>
+    <div class="modal-row"><span class="modal-row-label">To</span><span class="modal-row-val">High-Yield Savings</span></div>
+    <div class="modal-row"><span class="modal-row-label">Amount</span><span class="modal-row-val">$500.00</span></div>
+    <button class="modal-close-btn" onclick="closeModal('transfer')">Confirm Transfer</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-add-budget" onclick="if(event.target===this)closeModal('add-budget')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">New Budget Category</div>
+    <div class="modal-sub">Set a monthly spending limit</div>
+    <div class="modal-row"><span class="modal-row-label">Category</span><span class="modal-row-val">Choose...</span></div>
+    <div class="modal-row"><span class="modal-row-label">Monthly Limit</span><span class="modal-row-val">$0.00</span></div>
+    <div class="modal-row"><span class="modal-row-label">Alert at</span><span class="modal-row-val">80%</span></div>
+    <button class="modal-close-btn" onclick="closeModal('add-budget')">Create Budget</button>
+  </div>
+</div>
+
+<script>
+  function switchTab(tab) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById('screen-' + tab).classList.add('active');
+    const navEl = document.getElementById('nav-' + tab);
+    if (navEl) navEl.classList.add('active');
+  }
+
+  function showModal(id) {
+    document.getElementById('modal-' + id).classList.add('open');
+  }
+  function closeModal(id) {
+    document.getElementById('modal-' + id).classList.remove('open');
+  }
+
+  // Chart tab toggle
+  document.querySelectorAll('.chart-tab').forEach(tab => {
+    tab.addEventListener('click', function() {
+      document.querySelectorAll('.chart-tab').forEach(t => t.classList.remove('active'));
+      this.classList.add('active');
+    });
+  });
+
+  // Category chip toggle
+  document.querySelectorAll('.cat-chip').forEach(chip => {
+    chip.addEventListener('click', function() {
+      this.closest('.cat-scroll').querySelectorAll('.cat-chip').forEach(c => c.classList.remove('active'));
+      this.classList.add('active');
+    });
+  });
+</script>
+</body>
+</html>
