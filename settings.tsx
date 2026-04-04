@@ -8,6 +8,37 @@ import { Colors, Spacing, Radius } from '../../src/theme';
 import { SectionHeader, MonoLabel, GhostButton } from '../../src/components';
 import api from '../../src/services/api';
 
+export default function SettingsScreen() {
+  const { user, logout } = useStore();
+  const [apiKeys, setApiKeys]   = useState<any[]>([]);
+  const [webhooks, setWebhooks] = useState<any[]>([]);
+  const [loaded, setLoaded]     = useState(false);
+
+  const loadIntegrations = useCallback(async () => {
+    try {
+      const [k, w]: any = await Promise.all([api.getApiKeys(), api.getWebhooks()]);
+      setApiKeys(k); setWebhooks(w); setLoaded(true);
+    } catch {}
+  }, []);
+
+  useState(() => { loadIntegrations(); });
+
+  async function handleLogout() {
+    Alert.alert('Sign Out', 'Are you sure?', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Sign Out', style: 'destructive', onPress: async () => { await logout(); router.replace('/auth'); } }
+    ]);
+  }
+
+  async function handleDeleteKey(id: string) {
+    Alert.alert('Revoke API Key', 'This will immediately invalidate the key.', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Revoke', style: 'destructive', onPress: async () => {
+        await api.deleteApiKey(id);
+        await loadIntegrations();
+      }}
+    ]);
+  }
 
   async function handleExport(format: 'json' | 'csv') {
     Alert.alert('Export Data', `Export all transactions as ${format.toUpperCase()}?`, [
